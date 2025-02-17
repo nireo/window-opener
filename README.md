@@ -1,0 +1,1 @@
+# automaattinen ikkunanavaaja
