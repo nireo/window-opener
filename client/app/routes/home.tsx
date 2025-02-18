@@ -43,7 +43,7 @@ export default function Home() {
           }`}>
           Status: {
             isError ? 'Error' :
-              isMoving ? 'Avataan' :
+              isMoving ? 'Liikkuu' :
                 isOpen ? 'Auki' :
                   'Suljettu'
           }
