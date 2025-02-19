@@ -39,7 +39,7 @@ export default function Settings() {
       <h1 className="text-2xl font-bold mb-6 text-center">Ikkunan asetukset</h1>
 
       <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-4">Lämpötilä asetukset</h2>
+        <h2 className="text-xl font-semibold mb-4">Lämpötila asetukset</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
