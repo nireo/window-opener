@@ -1,7 +1,6 @@
 import type { Route } from "./+types/home";
-import { useState, type ChangeEvent } from "react";
-import { Link } from "react-router";
-
+import { useState, useEffect, type ChangeEvent } from "react";
+import { Link, useNavigate } from "react-router";
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -10,28 +9,25 @@ export function meta({ }: Route.MetaArgs) {
   ];
 }
 
-interface TempSettings {
-  minTemp: number;
-  maxTemp: number;
-}
-
-
 export default function Settings() {
-  const [tempSettings, setTempSettings] = useState<TempSettings>({
-    minTemp: 18,
-    maxTemp: 25
-  });
+  const [targetTemp, setTargetTemp] = useState<number>(22);
+  const navigate = useNavigate();
+
+  // Hae tallennettu arvo, kun komponentti ladataan
+  useEffect(() => {
+    const savedTemp = localStorage.getItem("targetTemp");
+    if (savedTemp !== null) {
+      setTargetTemp(Number(savedTemp));
+    }
+  }, []);
 
   const handleTempChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setTempSettings(prev => ({
-      ...prev,
-      [name]: Number(value)
-    }));
+    setTargetTemp(Number(e.target.value));
   };
 
   const handleSave = () => {
-    // TODO: tallenna asetukset
+    localStorage.setItem('targetTemp', targetTemp.toString());
+    navigate("/"); // Navigoi takaisin kotiruutuun
   };
 
   return (
@@ -39,30 +35,15 @@ export default function Settings() {
       <h1 className="text-2xl font-bold mb-6 text-center">Ikkunan asetukset</h1>
 
       <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-4">Lämpötila asetukset</h2>
+        <h2 className="text-xl font-semibold mb-4">Lämpötila-asetukset</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Minimi lämpötila(°C)
+              Tavoitelämpötila (°C)
             </label>
             <input
               type="number"
-              name="minTemp"
-              value={tempSettings.minTemp}
-              onChange={handleTempChange}
-              className="w-full p-2 border rounded-lg"
-              min="-20"
-              max="40"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Maksimi Lämpötila (°C)
-            </label>
-            <input
-              type="number"
-              name="maxTemp"
-              value={tempSettings.maxTemp}
+              value={targetTemp}
               onChange={handleTempChange}
               className="w-full p-2 border rounded-lg"
               min="-20"
@@ -88,5 +69,4 @@ export default function Settings() {
       </div>
     </div>
   );
-
 }
