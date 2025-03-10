@@ -1,6 +1,7 @@
 import type { Route } from "./+types/home";
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
+import { setAngle } from "~/api/api";
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -43,6 +44,7 @@ export default function Home() {
     setIsAuto(false);
     setIsMoving(true);
     setSliderValue(100);
+    setAngle(100)
     setTimeout(() => {
       setIsOpen(true);
       setIsMoving(false);
@@ -56,6 +58,7 @@ export default function Home() {
     setIsAuto(false);
     setIsMoving(true);
     setSliderValue(0);
+    setAngle(0)
     setTimeout(() => {
       setIsOpen(false);
       setIsMoving(false);
@@ -80,6 +83,7 @@ export default function Home() {
     if (isError) return;
     setIsAuto(false);
     setIsMoving(true);
+    setAngle(sliderValue)
     setTimeout(() => {
       setIsOpen(sliderValue > 0);
       setIsMoving(false);
