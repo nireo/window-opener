@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import serial
 import time
 import threading
@@ -6,6 +7,7 @@ import queue
 import datetime
 
 app = Flask(__name__)
+cors = CORS(app)
 
 # Update this with your Arduino's serial port.
 SERIAL_PORT = 'COM3'  # For Windows, e.g., 'COM3'
@@ -56,6 +58,12 @@ def timer_worker():
 # Start the timer worker thread
 timer_thread = threading.Thread(target=timer_worker, daemon=True)
 timer_thread.start()
+
+@app.route('/get_timers')
+def get_timers():
+    # Get all tasks in the queue
+    tasks = list(timer_queue.queue)
+    return jsonify({'timers': [{'time': task[0], 'angle': task[1]} for task in tasks]})
 
 @app.route('/set_timer', methods=['POST'])
 def set_timer():
