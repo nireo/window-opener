@@ -241,13 +241,13 @@ export default function Home() {
           
         </Link>
         </div>
-        <div className="mb-6 text-center">
+        {/* <div className="mb-6 text-center">
           <img
             src="/window.jpg"
             alt="Window"
             className="mx-auto w-48 h-48 object-contain"
           />
-        </div>
+        </div> */}
     </div>
   );
 }
