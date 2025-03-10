@@ -11,7 +11,7 @@ app = Flask(__name__)
 SERIAL_PORT = 'COM3'  # For Windows, e.g., 'COM3'
 BAUD_RATE = 9600
 
-angle_closed = 149
+angle_closed = 157
 angle_open = 110
 
 # Queue to store timer tasks

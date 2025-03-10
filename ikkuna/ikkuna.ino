@@ -4,7 +4,7 @@ Servo myServo;
 const int servoPin = 9;
 
 // Start with a default angle
-int currentAngle = 145;
+int currentAngle = 150;
 
 void setup() {
   Serial.begin(9600);
@@ -16,7 +16,7 @@ void loop() {
   if (Serial.available() > 0) {
     // Read the target angle from serial input
     int targetAngle = Serial.parseInt();
-    targetAngle = constrain(targetAngle, 100, 140);
+    targetAngle = constrain(targetAngle, 0, 180);
     
     Serial.print("Moving servo from ");
     Serial.print(currentAngle);
@@ -28,12 +28,12 @@ void loop() {
     if (currentAngle < targetAngle) {
       for (int angle = currentAngle; angle <= targetAngle; angle++) {
         myServo.write(angle);
-        delay(40);  // Delay between each incremental step (adjust to control speed)
+        delay(20);  // Delay between each incremental step (adjust to control speed)
       }
     } else if (currentAngle > targetAngle) {
       for (int angle = currentAngle; angle >= targetAngle; angle--) {
         myServo.write(angle);
-        delay(40);  // Delay between each incremental step (adjust to control speed)
+        delay(20);  // Delay between each incremental step (adjust to control speed)
       }
     }
     
