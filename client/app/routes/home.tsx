@@ -1,5 +1,5 @@
 import type { Route } from "./+types/home";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 import { Link } from 'react-router';
 import { setAngle } from "~/api/api";
 
@@ -16,7 +16,7 @@ export default function Home() {
   const [isError, setIsError] = useState(false);
   const [sliderValue, setSliderValue] = useState(0);
   const [isAuto, setIsAuto] = useState(false);
-  const [targetTemp, setTargetTemp] = useState<number>(22);
+  const [targetTemp, setTargetTemp] = useState<number | ''>('');
 
   useEffect(() => {
     const savedTemp = localStorage.getItem("targetTemp");
@@ -24,7 +24,7 @@ export default function Home() {
     const savedIsOpen = localStorage.getItem("isOpen");
     const savedIsAuto = localStorage.getItem("isAuto");
     if (savedTemp !== null) {
-      setTargetTemp(Number(savedTemp));
+      setTargetTemp(savedTemp === '' ? '' : Number(savedTemp));
     }
     if (savedSliderValue !== null) {
       const value = Number(savedSliderValue);
@@ -39,32 +39,37 @@ export default function Home() {
     }
   }, []);
 
+
   const handleOpen = () => {
     if (isError) return;
     setIsAuto(false);
-    setIsMoving(true);
+    //setIsMoving(true);
     setSliderValue(100);
-    setAngle(100)
-    setTimeout(() => {
+    setAngle(100);
+    setIsOpen(true);
+
+/*     setTimeout(() => {
       setIsOpen(true);
       setIsMoving(false);
       localStorage.setItem("sliderValue", "100");
       localStorage.setItem("isOpen", "true");
-    }, 2000);
+    }, 2000); */
   };
 
   const handleClose = () => {
     if (isError) return;
     setIsAuto(false);
-    setIsMoving(true);
+    setIsOpen(false);
+    //setIsMoving(true);
     setSliderValue(0);
     setAngle(0)
-    setTimeout(() => {
+    localStorage.setItem("sliderValue", "0");
+    localStorage.setItem("isOpen", "false");
+/*     setTimeout(() => {
       setIsOpen(false);
       setIsMoving(false);
-      localStorage.setItem("sliderValue", "0");
-      localStorage.setItem("isOpen", "false");
-    }, 2000);
+      
+    }, 2000);  */
   };
 
   const snapToValue = (value: number) => {
@@ -82,19 +87,56 @@ export default function Home() {
   const handleSliderRelease = () => {
     if (isError) return;
     setIsAuto(false);
-    setIsMoving(true);
+    //setIsMoving(true);
     setAngle(sliderValue)
-    setTimeout(() => {
+    setIsOpen(sliderValue > 0);
+/*     setTimeout(() => {
       setIsOpen(sliderValue > 0);
       setIsMoving(false);
       localStorage.setItem("sliderValue", sliderValue.toString());
       localStorage.setItem("isOpen", (sliderValue > 0).toString());
-    }, 2000);
+    }, 2000); */
   };
 
   const handleAutoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsAuto(e.target.checked);
     localStorage.setItem("isAuto", e.target.checked.toString());
+  };
+
+  const handleTempChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    
+    // Allow empty input
+    if (inputValue === '') {
+      setTargetTemp('');
+      localStorage.setItem("targetTemp", '');
+      return;
+    }
+    
+    const value = Math.round(Number(inputValue) * 10) / 10;
+    if (value < -20) {
+      setTargetTemp(-20);
+    }
+    else if (value > 40) {
+      setTargetTemp(40);
+    }
+    else {
+      setTargetTemp(value);
+    }
+    localStorage.setItem("targetTemp", inputValue === '' ? '' : value.toString());
+  };
+
+  const handleTempBlur = () => {
+    // Skip validation for empty values
+    if (targetTemp === '') {
+      localStorage.setItem("targetTemp", '');
+      return;
+    }
+    
+    // Enforce limits when user finishes input
+    if (targetTemp < -20) setTargetTemp(-20);
+    if (targetTemp > 40) setTargetTemp(40);
+    localStorage.setItem("targetTemp", targetTemp.toString());
   };
 
   return (
@@ -110,15 +152,13 @@ export default function Home() {
           Status: {
             isError ? 'Error' :
             isMoving ? 'Liikkuu' :
-            isAuto ? `Automaattinen ohjaus (${targetTemp}°C)` :
+            isAuto ? `Automaattinen ohjaus (${targetTemp === '' ? 'ei asetettu' : `${targetTemp}°C`})` :
             isOpen ? 'Auki' :
                   'Suljettu'
           }
         </span>
       </div>
-      <div className="mb-6 text-center">
-        <img src="../public/window.jpg" alt="Window" className="mx-auto mb-4" />
-      </div>
+        
       <div className="mb-6 text-center">
         <label htmlFor="window-slider" className="block text-sm font-medium text-gray-700 mb-1">
           Ikkunan aukinaisuus:
@@ -130,7 +170,6 @@ export default function Home() {
           min="0"
           max="100"
           value={sliderValue}
-          disabled={isMoving || isError}
           onChange={handleSliderChange}
           onMouseUp={handleSliderRelease}
           onTouchEnd={handleSliderRelease}
@@ -143,43 +182,72 @@ export default function Home() {
       <div className="grid grid-cols-2 gap-4 mb-4">
         <button
           onClick={handleClose}
-          disabled={!isOpen || isMoving || isError}
           className="flex items-center justify-center gap-2 p-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Sulje
         </button>
         <button
           onClick={handleOpen}
-          disabled={sliderValue === 100 || isMoving || isError}
           className="flex items-center justify-center gap-2 p-4 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Avaa
         </button>
       </div>
-      <div className="flex items-center justify-between">
+      <h2 className="text-xl font-semibold mb-4">Lämpötila-asetukset</h2>
+        <div className="space-y-4 mb-8">
+          <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Tavoitelämpötila (°C)
+        </label>
+        <input
+          type="number"
+          value={targetTemp}
+          onChange={handleTempChange}
+          onBlur={handleTempBlur}
+          className="w-full p-2 border rounded-lg"
+          min={-20}
+          max={40}
+          step="0.5"
+          placeholder="Syötä lämpötila"
+        />
+          </div>
+        </div>
+      <div className="mb-6">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-medium text-gray-700">
+            Automaattinen ohjaus ({targetTemp === '' ? 'ei asetettu' : `${targetTemp}°C`})
+          </span>
+          <label className="inline-flex items-center cursor-pointer">
+            <input 
+              id="auto-control"
+              type="checkbox"
+              checked={isAuto}
+              onChange={handleAutoChange}
+              disabled={isMoving}
+              className="sr-only peer"
+            />
+            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"></div>
+          </label>
+        </div>
+      </div>
+      <div className="mb-6 text-center">
         <Link
           to="/settings"
           className={`block w-full p-4 bg-gray-500 text-white text-center rounded-lg hover:bg-gray-600 transition-colors"
           ${isMoving ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}
           aria-disabled={isMoving}
           >
-          Asetukset
+          Ajastimet
           
         </Link>
-        <div className="ml-4">
-          <label htmlFor="auto-control" className="block text-sm font-medium text-gray-700 mb-1">
-            Automaattinen ohjaus ({targetTemp}°C):
-          </label>
-          <input 
-            id="auto-control"
-            type="checkbox"
-            checked={isAuto}
-            onChange={handleAutoChange}
-            disabled={isMoving}
-            className="w-full"
+        </div>
+        <div className="mb-6 text-center">
+          <img
+            src="/window.jpg"
+            alt="Window"
+            className="mx-auto w-48 h-48 object-contain"
           />
         </div>
-      </div>
     </div>
   );
 }
