@@ -64,9 +64,16 @@ export default function Home() {
     }, 2000);
   };
 
+  const snapToValue = (value: number) => {
+    const snapPoints = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    return snapPoints.reduce((prev, curr) => Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev);
+  };  
+
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsAuto(false);
-    setSliderValue(Number(e.target.value));
+    const snapped = snapToValue(Number(e.target.value));
+    setSliderValue(snapped);
+    //setSliderValue(Number(e.target.value));
   };
 
   const handleSliderRelease = () => {
