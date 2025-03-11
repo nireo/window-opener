@@ -34,7 +34,7 @@ export default function Home() {
     if (savedIsOpen !== null) {
       setIsOpen(savedIsOpen === 'true');
     }
-    if (savedIsAuto !== null && savedIsAuto === 'true') {
+    if (savedIsAuto !== null && savedIsAuto === 'true' && savedTemp !== null && savedTemp !== '') {
       setIsAuto(true);
     }
   }, []);
@@ -43,17 +43,12 @@ export default function Home() {
   const handleOpen = () => {
     if (isError) return;
     setIsAuto(false);
-    //setIsMoving(true);
     setSliderValue(100);
     setAngle(100);
     setIsOpen(true);
-
-/*     setTimeout(() => {
-      setIsOpen(true);
-      setIsMoving(false);
-      localStorage.setItem("sliderValue", "100");
-      localStorage.setItem("isOpen", "true");
-    }, 2000); */
+    localStorage.setItem("sliderValue", "100");
+    localStorage.setItem("isOpen", "true");
+    localStorage.setItem("isAuto", "false");
   };
 
   const handleClose = () => {
@@ -65,11 +60,7 @@ export default function Home() {
     setAngle(0)
     localStorage.setItem("sliderValue", "0");
     localStorage.setItem("isOpen", "false");
-/*     setTimeout(() => {
-      setIsOpen(false);
-      setIsMoving(false);
-      
-    }, 2000);  */
+    localStorage.setItem("isAuto", "false");
   };
 
   const snapToValue = (value: number) => {
@@ -81,21 +72,17 @@ export default function Home() {
     setIsAuto(false);
     const snapped = snapToValue(Number(e.target.value));
     setSliderValue(snapped);
-    //setSliderValue(Number(e.target.value));
   };
 
   const handleSliderRelease = () => {
     if (isError) return;
     setIsAuto(false);
     //setIsMoving(true);
-    setAngle(sliderValue)
+    setAngle(sliderValue);
     setIsOpen(sliderValue > 0);
-/*     setTimeout(() => {
-      setIsOpen(sliderValue > 0);
-      setIsMoving(false);
-      localStorage.setItem("sliderValue", sliderValue.toString());
-      localStorage.setItem("isOpen", (sliderValue > 0).toString());
-    }, 2000); */
+    localStorage.setItem("sliderValue", sliderValue.toString());
+    localStorage.setItem("isOpen", (sliderValue > 0).toString());
+    localStorage.setItem("isAuto", "false");
   };
 
   const handleAutoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,6 +96,7 @@ export default function Home() {
     // Allow empty input
     if (inputValue === '') {
       setTargetTemp('');
+      setIsAuto(false);
       localStorage.setItem("targetTemp", '');
       return;
     }
@@ -213,7 +201,7 @@ export default function Home() {
           </div>
         </div>
       <div className="mb-6">
-        <div className="flex items-center gap-3">
+        <div className="grid grid-cols-2 gap-10 mb-4">
           <span className="text-sm font-medium text-gray-700">
             Automaattinen ohjaus ({targetTemp === '' ? 'ei asetettu' : `${targetTemp}°C`})
           </span>
@@ -223,7 +211,7 @@ export default function Home() {
               type="checkbox"
               checked={isAuto}
               onChange={handleAutoChange}
-              disabled={isMoving}
+              disabled={isMoving || targetTemp === ''}
               className="sr-only peer"
             />
             <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"></div>

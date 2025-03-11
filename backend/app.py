@@ -64,6 +64,7 @@ def timer_worker():
             if scheduled_time > now:
                 # Wait until the scheduled time
                 wait_seconds = (scheduled_time - now).total_seconds()
+                print(f"Timer waiting for {wait_seconds} seconds until {scheduled_time}")
                 if wait_seconds > 0:
                     time.sleep(wait_seconds)
             
