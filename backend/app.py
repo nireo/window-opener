@@ -20,12 +20,7 @@ angle_open = 110
 # Task management with unique IDs
 timer_queue = queue.PriorityQueue()
 tasks_by_id = {}  # Dictionary to store tasks by ID
-task_lock = threading.RLock()  # Use RLock for more complex locking scenarios
 
-# Variable to keep track of the current task being processed
-current_task = None
-current_task_lock = threading.Lock()
-cancel_current_task = False
 
 # Attempt to open the serial connection.
 try:
@@ -38,64 +33,45 @@ except Exception as e:
 
 # Background worker to process timer queue
 def timer_worker():
-    global current_task, cancel_current_task
     while True:
         try:
             # Get the next scheduled task (blocking until one is available)
-            priority, task_id = timer_queue.get()
-            
-            with task_lock:
-                if task_id not in tasks_by_id:
-                    # Task was removed while in queue
-                    timer_queue.task_done()
-                    continue
+            if timer_queue.qsize() > 0:
+                priority, task_id = timer_queue.queue[0]
                 
                 task = tasks_by_id[task_id]
                 scheduled_time = task['time']
                 angle = task['angle']
             
-            # Update the current task
-            with current_task_lock:
-                current_task = task_id
-                cancel_current_task = False
-            
-            # Calculate time to wait
-            now = datetime.datetime.now().astimezone()
-            if scheduled_time > now:
-                # Wait until the scheduled time
-                wait_seconds = (scheduled_time - now).total_seconds()
-                print(f"Timer waiting for {wait_seconds} seconds until {scheduled_time}")
-                if wait_seconds > 0:
-                    time.sleep(wait_seconds)
-            
-            # Check if the current task should be canceled
-            with current_task_lock:
-                if cancel_current_task:
-                    print(f"Task canceled: {scheduled_time}, {angle}")
-                    current_task = None
-                    timer_queue.task_done()
-                    continue
-            
-            # Send angle command to Arduino
-            if ser:
-                ser.write(f"{angle}\n".encode())
-                print(f"Timer executed: Sent angle {angle} to Arduino at {datetime.datetime.now()}")
-            else:
-                print(f"Timer executed but serial connection not available. Angle: {angle}")
-            
-            # Remove completed task
-            with task_lock:
+                # Calculate time to wait
+                now = datetime.datetime.now().astimezone()
+                if scheduled_time > now:
+                    # Wait until the scheduled time
+                    wait_seconds = (scheduled_time - now).total_seconds()
+                    print(f"Timer waiting for {wait_seconds} seconds until {scheduled_time}")
+                    if wait_seconds > 0:
+                        time.sleep(min(wait_seconds, 1))  # Limit to 1 minute
+                        continue
+                
+
+                timer_queue.get()
+                # Send angle command to Arduino
+                if ser:
+                    ser.write(f"{angle}\n".encode())
+                    print(f"Timer executed: Sent angle {angle} to Arduino at {datetime.datetime.now()}")
+                else:
+                    print(f"Timer executed but serial connection not available. Angle: {angle}")
+                
+                # Remove completed task
                 if task_id in tasks_by_id:
                     del tasks_by_id[task_id]
-                
-            # Mark task as done
-            timer_queue.task_done()
-            
-            # Clear the current task
-            with current_task_lock:
-                current_task = None
+                    
+                # Mark task as done
+                timer_queue.task_done()
+
         except Exception as e:
             print(f"Error in timer worker: {e}")
+            time.sleep(1)
 
 # Start the timer worker thread
 timer_thread = threading.Thread(target=timer_worker, daemon=True)
@@ -103,8 +79,7 @@ timer_thread.start()
 
 @app.route('/get_timers')
 def get_timers():
-    with task_lock:
-        tasks = list(tasks_by_id.values())
+    tasks = list(tasks_by_id.values())
     return jsonify({'timers': tasks})
 
 @app.route('/set_timer', methods=['POST'])
@@ -129,15 +104,14 @@ def set_timer():
     task_id = str(uuid.uuid4())
     
     # Add task to our data structures
-    with task_lock:
-        task = {
-            'id': task_id,
-            'time': scheduled_time,
-            'angle': actual_angle,
-            'display_angle': angle,
-        }
-        tasks_by_id[task_id] = task
-        timer_queue.put((scheduled_time, task_id))
+    task = {
+        'id': task_id,
+        'time': scheduled_time,
+        'angle': actual_angle,
+        'display_angle': angle,
+    }
+    tasks_by_id[task_id] = task
+    timer_queue.put((scheduled_time.timestamp(), task_id))
     
     print(f"Timer set: {scheduled_time.isoformat()} from now, angle {actual_angle}, ID: {task_id}")
     return jsonify({
@@ -181,18 +155,18 @@ def remove_timer():
         return jsonify({'error': 'Missing task ID in JSON payload'}), 400
     
     task_id = data['id']
-    removed = False
+    if task_id in tasks_by_id:
+        del tasks_by_id[task_id]
+        new_queue = queue.PriorityQueue()
+        while not timer_queue.empty():
+            priority, tid = timer_queue.get()
+            if tid != task_id:
+                new_queue.put((priority, tid))
+                timer_queue.queue = new_queue.queue
+                removed = True
+            else:
+                removed = False
     
-    with task_lock:
-        if task_id in tasks_by_id:
-            del tasks_by_id[task_id]
-            removed = True
-    
-    # Check if the task is currently being processed
-    with current_task_lock:
-        if current_task == task_id:
-            cancel_current_task = True
-            removed = True
     
     if removed:
         return jsonify({'status': 'success', 'message': 'Timer removed'})
