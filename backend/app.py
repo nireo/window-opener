@@ -15,7 +15,7 @@ SERIAL_PORT = 'COM3'  # For Windows, e.g., 'COM3'
 BAUD_RATE = 9600
 
 angle_closed = 157
-angle_open = 110
+angle_open = 120
 
 # Task management with unique IDs
 timer_queue = queue.PriorityQueue()
@@ -68,6 +68,8 @@ def timer_worker():
                     
                 # Mark task as done
                 timer_queue.task_done()
+            else:
+                time.sleep(1)
 
         except Exception as e:
             print(f"Error in timer worker: {e}")
