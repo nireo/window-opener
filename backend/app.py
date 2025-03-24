@@ -91,7 +91,7 @@ def set_timer():
         return jsonify({'error': 'Missing parameters in JSON payload'}), 400
 
     try:
-        scheduled_time = datetime.datetime.fromisoformat(data['time']).astimezone()
+        scheduled_time = datetime.datetime.fromtimestamp(data['time']).astimezone()
         angle = int(data['angle'])
     except ValueError:
         return jsonify({'error': 'All parameters must be integers'}), 400
