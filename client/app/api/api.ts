@@ -20,3 +20,9 @@ export async function deleteTimer(id: number) {
     await fetch("http://localhost:5000/remove_timer", 
         {method: 'POST', body: JSON.stringify({id}), headers: {'Content-Type': 'application/json'}});
 }
+
+export async function getAngle() {
+    const response = await fetch("http://localhost:5000/get_angle");
+    const json = await response.json();
+    return json.angle;
+}

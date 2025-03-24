@@ -1,7 +1,7 @@
 import type { Route } from "./+types/home";
 import { useState, useEffect, type ChangeEvent } from 'react';
 import { Link } from 'react-router';
-import { setAngle } from "~/api/api";
+import { setAngle, getAngle } from "~/api/api";
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -39,6 +39,15 @@ export default function Home() {
     }
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      getAngle().then((angle) => {
+        setSliderValue(angle);
+        setIsOpen(angle > 0);
+      });
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleOpen = () => {
     if (isError) return;

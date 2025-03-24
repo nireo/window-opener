@@ -11,11 +11,12 @@ app = Flask(__name__)
 cors = CORS(app)
 
 # Update this with your Arduino's serial port.
-SERIAL_PORT = 'COM3'  # For Windows, e.g., 'COM3'
+SERIAL_PORT = 'COM11'  # For Windows, e.g., 'COM3'
 BAUD_RATE = 9600
 
 angle_closed = 157
 angle_open = 120
+current_angle = angle_closed
 
 # Task management with unique IDs
 timer_queue = queue.PriorityQueue()
@@ -30,6 +31,19 @@ try:
 except Exception as e:
     print(f"Error opening serial port: {e}")
     ser = None
+
+def serial_worker():
+    global current_angle
+    while True:
+        if ser:
+            # Read the serial data and update the current angle
+            try:
+                line = ser.readline().decode().strip()
+                if line:
+                    current_angle = int(line)
+                    print(f"Current angle: {current_angle}")
+            except Exception as e:
+                print(f"Error reading serial data: {e}")
 
 # Background worker to process timer queue
 def timer_worker():
@@ -78,6 +92,11 @@ def timer_worker():
 # Start the timer worker thread
 timer_thread = threading.Thread(target=timer_worker, daemon=True)
 timer_thread.start()
+
+# Start the serial worker thread
+serial_thread = threading.Thread(target=serial_worker, daemon=True)
+serial_thread.start()
+
 
 @app.route('/get_timers')
 def get_timers():
@@ -146,7 +165,15 @@ def set_angle():
     ser.write(f"{actual_angle}\n".encode())
     print(f"Sent angle {actual_angle} to Arduino.")
     
-    return jsonify({'status': 'success', 'angle': angle})
+    return jsonify({'status': 'success'})
+
+# Get angle
+@app.route('/get_angle')
+def get_angle():
+    # Calulate the angle between 0 and 100
+    angle = (angle_closed - current_angle) / (angle_closed - angle_open) * 100
+    print(f"Current angle: {current_angle}, calculated angle: {angle}")
+    return jsonify({'angle': angle})
 
 @app.route('/remove_timer', methods=['POST'])
 def remove_timer():
