@@ -5,7 +5,8 @@ export async function setAngle(angle: number) {
 
 // time in seconds
 export async function setTimer(timeDate: Date, angle: number) {
-    const time = timeDate.toISOString();
+    const time = Math.floor(timeDate.getTime() / 1000);
+    console.log(time);
     await fetch("http://localhost:5000/set_timer", 
         {method: 'POST', body: JSON.stringify({time, angle}), headers: {'Content-Type': 'application/json'}});
 }
