@@ -7,7 +7,7 @@
 
 html,
 body {
-  @apply bg-blue-300;
+  @apply bg-zinc-600;
 
   @media (prefers-color-scheme: normal) {
     color-scheme: normal;
