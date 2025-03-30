@@ -10,6 +10,9 @@ export function meta({ }: Route.MetaArgs) {
   ];
 }
 
+const OUTSIDE_TEMP = 12;
+const MAX_INSIDE_TEMP = 30;
+
 export default function Home() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
@@ -17,6 +20,8 @@ export default function Home() {
   const [sliderValue, setSliderValue] = useState(0);
   const [isAuto, setIsAuto] = useState(false);
   const [targetTemp, setTargetTemp] = useState<number | ''>('');
+
+  const [insideTemp, setInsideTemp] = useState<number>(30);
 
   useEffect(() => {
     const savedTemp = localStorage.getItem("targetTemp");
@@ -136,6 +141,29 @@ export default function Home() {
     localStorage.setItem("targetTemp", targetTemp.toString());
   };
 
+  useEffect(() => {
+    if(!isAuto) return
+    if (targetTemp === '') return
+
+    const diff = insideTemp - targetTemp;
+    const sliderValue = Math.max(0, Math.min(100, (diff) * 50));
+    setSliderValue(sliderValue);
+    setAngle(sliderValue);
+    setIsOpen(sliderValue > 0);
+
+  }, [insideTemp, isAuto, targetTemp]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const mult = (sliderValue || 100) / 100;
+      if (isOpen) setInsideTemp((prev) => prev - mult * (prev - OUTSIDE_TEMP) / 100);
+      else setInsideTemp((prev) => prev + (MAX_INSIDE_TEMP - prev) / 200);
+    }, 250)
+    
+    return () => clearInterval(interval);
+  }, [isOpen, sliderValue, setInsideTemp])
+  
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
       <div className="w-full max-w-md">
@@ -149,11 +177,11 @@ export default function Home() {
           <div className="flex justify-between items-center p-4 bg-blue-50">
             <div className="flex flex-col items-center p-3 bg-white rounded-xl shadow-sm">
               <span className="text-xs font-semibold text-blue-500">ULKONA</span>
-              <span className="text-2xl font-bold">12°C</span>
+              <span className="text-2xl font-bold">{OUTSIDE_TEMP}°C</span>
             </div>
             <div className="flex flex-col items-center p-3 bg-white rounded-xl shadow-sm">
               <span className="text-xs font-semibold text-blue-500">SISÄLLÄ</span>
-              <span className="text-2xl font-bold">20°C</span>
+              <span className="text-2xl font-bold w-22 flex"><span className="flex-1">{insideTemp.toPrecision(3)}</span><span>°C</span></span>
             </div>
           </div>
 
@@ -202,7 +230,7 @@ export default function Home() {
               />
               <div className="flex justify-between mt-2">
                 <span className="text-xs text-gray-500">0%</span>
-                <span className="text-sm font-medium text-blue-600">{sliderValue}%</span>
+                <span className="text-sm font-medium text-blue-600">{sliderValue.toFixed(0)}%</span>
                 <span className="text-xs text-gray-500">100%</span>
               </div>
             </div>
