@@ -180,6 +180,10 @@ export default function Home() {
               <span className="text-2xl font-bold">{OUTSIDE_TEMP}°C</span>
             </div>
             <div className="flex flex-col items-center p-3 bg-white rounded-xl shadow-sm">
+              <span className="text-xs font-semibold text-blue-500">CO₂-taso</span>
+              <span className="text-2xl font-bold">450 PPM</span>
+            </div>
+            <div className="flex flex-col items-center p-3 bg-white rounded-xl shadow-sm">
               <span className="text-xs font-semibold text-blue-500">SISÄLLÄ</span>
               <span className="text-2xl font-bold w-22 flex"><span className="flex-1">{insideTemp.toPrecision(3)}</span><span>°C</span></span>
             </div>
